@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Doctorado Gantt">
+<meta name="theme-color" content="#F5EFE3">
+<title>Doctorado Gantt</title>
+<script>
+// 🔥 PEGA AQUÍ TU firebaseConfig
+const FIREBASE_CONFIG={apiKey:"AIzaSyA_bM_ERYTun08m1zlw_1bLY6R1N8awkWo",authDomain:"tfm-gantt.firebaseapp.com",projectId:"tfm-gantt",storageBucket:"tfm-gantt.firebasestorage.app",messagingSenderId:"777924753151",appId:"1:777924753151:web:55b9ddde4c7864d339feca"};
+// ID único del proyecto (cambia el texto, sin espacios)
+const PROJECT_ID="doctorado-pdac-2026";
+</script>
+<style>
+:root{--bg:#F5EFE3;--s:#FBF8F1;--s2:#E9EACB;--b:#DDD6C2;--b2:#C3CFCB;--t:#3B200F;--m:#8A7462;--ac:#865550;--dg:#A3453F;--ok:#6F8F6A;--wn:#9F844D;--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px)}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--t);font-family:-apple-system,system-ui,sans-serif}
+#app{display:none;flex-direction:column;height:100dvh}
+.top{padding:calc(var(--st) + 10px) 16px 10px;border-bottom:1px solid var(--b);display:flex;align-items:center;gap:12px}
+.top div.h{flex:1}.top h1{font-size:17px}.top p{font-size:11px;color:var(--m)}
+.ib{width:36px;height:36px;border-radius:10px;border:1px solid var(--b2);background:var(--s);color:var(--t);font-size:16px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--m)}.dot.synced{background:var(--ok)}.dot.syncing{background:var(--wn)}.dot.error{background:var(--dg)}
+.tabs{display:flex;background:var(--s);border-bottom:1px solid var(--b)}
+.tab{flex:1;padding:11px 4px;text-align:center;font-size:12px;font-weight:600;color:var(--m);border-bottom:2px solid transparent}
+.tab.on{color:var(--ac);border-color:var(--ac)}
+.view{flex:1;overflow-y:auto;padding:12px 16px 90px}.view.hid{display:none}
+.ban{background:rgba(195,207,203,.45);border:1px solid rgba(134,85,80,.35);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px}
+.ban strong{display:block;font-size:14px}.ban span{font-size:11px;color:var(--m)}.ban .big{margin-left:auto;font-size:22px;font-weight:800;color:var(--ac)}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.cd{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:12px}
+.cd small{font-size:10px;color:var(--m);text-transform:uppercase;letter-spacing:.12em}.cd b{display:block;font-size:24px;margin-top:4px}
+.bar0{height:3px;background:var(--b);border-radius:2px;margin-top:8px}.bar0 i{display:block;height:100%;background:var(--ac);border-radius:2px}
+h2{font-size:12px;color:var(--m);text-transform:uppercase;letter-spacing:.15em;margin:18px 0 8px}
+.tc{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start}
+.tc.cur{border-color:var(--ac)}.tc.od{border-color:var(--dg)}.tc.done{opacity:.5}.tc.done .tn{text-decoration:line-through}
+.ck{width:22px;height:22px;border-radius:50%;border:2px solid var(--b2);font-size:11px;color:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.tc.done .ck{background:var(--ok);border-color:var(--ok);color:#fff}
+.ti{flex:1;min-width:0}.tn{font-size:14px;font-weight:600}.tm{display:flex;gap:6px;margin-top:5px;flex-wrap:wrap}
+.bd{font-size:10px;padding:2px 7px;border-radius:20px;background:var(--s2);color:var(--m);font-weight:600}
+.to{font-size:11px;color:var(--m);margin-top:4px}
+.eb{width:28px;height:28px;border-radius:8px;background:var(--s2);border:1px solid var(--b2);color:var(--m);display:flex;align-items:center;justify-content:center}
+.ph{display:flex;align-items:center;gap:8px;margin:14px 0 8px;font-weight:700;font-size:13px}.ph i{width:10px;height:10px;border-radius:3px}.ph span{margin-left:auto;color:var(--m);font-weight:400}
+.ms{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:14px;margin-bottom:8px;display:flex;gap:12px;align-items:center}
+.ms.past{opacity:.45}.ms b{font-size:14px}.ms small{display:block;font-size:11px;color:var(--m)}.ms .d{margin-left:auto;font-weight:800;font-size:13px;color:var(--ac)}
+.gs{overflow-x:auto;border:1px solid var(--b);border-radius:12px}
+.gr{display:grid;border-bottom:1px solid var(--b);min-height:28px;align-items:center}
+.gl{padding:0 8px;font-size:9px;font-weight:700;color:var(--m);background:var(--s);align-self:stretch;display:flex;align-items:center}
+.gw{text-align:center;font-size:9px;color:var(--m);padding:5px 0}.gw.now{color:var(--dg);font-weight:800;background:rgba(163,69,63,.1)}
+.bar{height:14px;border-radius:4px;margin:0 1px}.dm{text-align:center;font-size:13px}
+.fab{position:fixed;right:20px;bottom:calc(var(--sb) + 76px);width:52px;height:52px;border-radius:50%;background:var(--ac);color:#fff;font-size:26px;border:none;display:none;z-index:50}
+.nav{display:flex;background:var(--s);border-top:1px solid var(--b);padding-bottom:var(--sb)}
+.ni{flex:1;padding:9px 4px;text-align:center;font-size:10px;font-weight:600;color:var(--m)}.ni.on{color:var(--ac)}.ni div{font-size:19px}
+.ov{position:fixed;inset:0;background:rgba(59,32,15,.5);z-index:500;display:none;align-items:flex-end;justify-content:center}.ov.open{display:flex}
+.md{background:var(--s);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;padding:18px 20px calc(var(--sb) + 16px)}
+.md h3{font-size:17px;margin-bottom:14px}
+label{display:block;font-size:11px;color:var(--m);font-weight:600;text-transform:uppercase;letter-spacing:.08em;margin:12px 0 5px}
+input,select,textarea{width:100%;background:var(--s2);border:1px solid var(--b2);border-radius:10px;padding:11px 13px;color:var(--t);font-size:16px;font-family:inherit}
+input[type=color]{height:44px;padding:3px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ft{display:flex;gap:10px;margin-top:18px}
+.btn{flex:1;padding:13px;border-radius:12px;border:1px solid var(--b2);background:var(--s2);color:var(--t);font-size:15px;font-weight:700}
+.btn.p{background:var(--ac);border-color:var(--ac);color:#fff}.btn.d{color:var(--dg)}
+.mi{display:flex;align-items:center;gap:10px;padding:13px 4px;border-bottom:1px solid var(--b);font-size:15px}
+.mi i{width:12px;height:12px;border-radius:3px}
+.em{text-align:center;color:var(--m);padding:32px 16px;font-size:13px;line-height:1.6}
+.toast{position:fixed;bottom:calc(var(--sb) + 84px);left:50%;transform:translateX(-50%);background:var(--t);color:var(--bg);font-size:13px;font-weight:600;padding:10px 18px;border-radius:20px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:900}.toast.show{opacity:1}
+#load{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;color:var(--m)}
+textarea{font-family:inherit;resize:none}
+h1,h2,h3,.big,.cd b{font-family:Georgia,'Times New Roman',serif}
+.top h1{color:var(--t)}.top h1::after{content:'';display:block}
+.top,.tabs,.nav{background:var(--s)}
+.cd,.tc,.ms,.gs,.ban{box-shadow:0 2px 8px rgba(59,32,15,.08);border-radius:14px}
+.ban{background:linear-gradient(135deg,#E9EACB,#C3CFCB)}.ban .big,.ban span{color:var(--t)}
+.bar0 i{background:linear-gradient(90deg,#9F844D,#865550)}
+.tc.cur{background:#fff9ee}.tc.done .ck{color:#fff}
+.btn.p,.fab{background:var(--ac);border-color:var(--ac);color:#F5EFE3}
+.gw.now{background:rgba(159,132,77,.25);color:var(--t)}
+.toast{color:#F5EFE3}
+.dot{box-shadow:0 0 0 2px var(--s)}
+</style></head><body>
+<div id="load">Conectando...</div>
+<div id="app">
+ <div class="top"><div class="h"><h1 id="ttl">Doctorado Gantt</h1><p id="today"></p></div><div class="dot" id="dot"></div><button class="ib" onclick="openF('menu')">⋯</button></div>
+ <div class="tabs" id="tabs"></div>
+ <div class="view" id="v-home"></div><div class="view hid" id="v-gantt"></div>
+ <div class="view hid" id="v-tasks"></div><div class="view hid" id="v-hitos"></div><div class="view hid" id="v-notas"></div>
+ <button class="fab" id="fab" onclick="addNew()">+</button>
+ <div class="nav" id="nav"></div>
+</div>
+<div class="ov" id="ov" onclick="if(event.target===this)closeF()"><div class="md" id="md"></div></div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import {getFirestore,doc,getDoc,setDoc,onSnapshot} from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+const $=i=>document.getElementById(i);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const iso=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const pd=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const fd=s=>pd(s).toLocaleDateString('es-ES',{day:'2-digit',month:'short',year:'numeric'});
+const SEED={"project": {"title": "Doctorado PDAC", "startDate": "2026-10-01", "endDate": "2029-09-30", "totalWeeks": 36}, "phases": [{"id": "f0", "name": "Arranque y enfoque", "color": "#6F9A8C", "obj": "Convertir la idea en pregunta doctoral operativa.", "dec": "Horizonte predictivo; definición de preclínico; programa doctoral."}, {"id": "f1", "name": "Datos y gobernanza", "color": "#9F844D", "obj": "Conocer exactamente qué contienen las 3 bases y qué uso está permitido.", "dec": "Qué bases sirven para entrenamiento/validación; calidad de fechas."}, {"id": "f2", "name": "Curación y ETL", "color": "#865550", "obj": "Construir datasets analíticos reproducibles.", "dec": "Cómo manejar missing data y exclusiones."}, {"id": "f3", "name": "Modelos clínico-epidemiológicos", "color": "#3B200F", "obj": "Desarrollar el modelo central de estratificación de riesgo.", "dec": "Métrica primaria y umbrales clínicamente útiles."}, {"id": "f4", "name": "Validación y utilidad clínica", "color": "#B9877E", "obj": "Demostrar robustez y utilidad real del modelo.", "dec": "Qué rendimiento justifica pasar a genética/imagen."}, {"id": "f5", "name": "Genética/molecular", "color": "#C2A765", "obj": "Comprobar si genética/molecular mejora el grupo de riesgo.", "dec": "Valor incremental real frente al modelo clínico."}, {"id": "f6", "name": "Imagen/radiómica", "color": "#8FA58A", "obj": "Analizar imagen en población enriquecida.", "dec": "Disponibilidad de CT/MRI y segmentaciones."}, {"id": "f7", "name": "Publicaciones y tesis", "color": "#7A6A50", "obj": "Convertir resultados en artículos y tesis defendible.", "dec": "Cuándo cerrar análisis y no seguir expandiendo el proyecto."}], "tasks": [{"id": "t1", "phase": "f0", "name": "Alinear alcance científico: riesgo preclínico vs cribado poblacional universal", "weekStart": 1, "weekEnd": 2, "done": false, "output": "Pregunta principal, hipótesis y población objetivo"}, {"id": "t2", "phase": "f0", "name": "Revisión bibliográfica sobre IA, historia clínica, riesgo PDAC y detección precoz", "weekStart": 1, "weekEnd": 6, "done": false, "output": "Mapa del estado del arte y gaps"}, {"id": "t3", "phase": "f0", "name": "Definir protocolo doctoral: objetivos, endpoints, horizonte temporal y validación", "weekStart": 1, "weekEnd": 4, "done": false, "output": "Plan de investigación v1"}, {"id": "t4", "phase": "f0", "name": "Elegir programa de doctorado, dirección, codirección, tutoría y seguimiento", "weekStart": 1, "weekEnd": 4, "done": false, "output": "Estructura académica cerrada"}, {"id": "t5", "phase": "f1", "name": "Inventario de las 3 bases de datos: población, variables, fechas, calidad y permisos", "weekStart": 2, "weekEnd": 6, "done": false, "output": "Inventario de datos + diccionario v0"}, {"id": "t6", "phase": "f1", "name": "Definir cohortes: casos, población base, exclusiones y ventanas prediagnóstico", "weekStart": 3, "weekEnd": 8, "done": false, "output": "Documento de definición de cohortes"}, {"id": "t7", "phase": "f1", "name": "Plan anti-data leakage: excluir señales cercanas al diagnóstico o posteriores a sospecha", "weekStart": 4, "weekEnd": 8, "done": false, "output": "Protocolo anti-leakage"}, {"id": "t8", "phase": "f1", "name": "Aprobaciones éticas, protección de datos y trazabilidad", "weekStart": 2, "weekEnd": 9, "done": false, "output": "Autorizaciones y registro de accesos"}, {"id": "t9", "phase": "f2", "name": "ETL inicial: extracción, unificación y armonización de variables clínicas/epidemiológicas", "weekStart": 5, "weekEnd": 12, "done": false, "output": "Dataset clínico-epidemiológico v1"}, {"id": "t10", "phase": "f2", "name": "Normalización temporal: ventanas de riesgo 6m/1a/3a/5a antes del diagnóstico", "weekStart": 7, "weekEnd": 13, "done": false, "output": "Variables temporales y etiquetas"}, {"id": "t11", "phase": "f2", "name": "Missing data, codificación, outliers y sesgos de captura", "weekStart": 8, "weekEnd": 14, "done": false, "output": "Dataset analítico v1 + QC report"}, {"id": "t12", "phase": "f2", "name": "Diseño de splits por base/cohorte: entrenamiento, validación interna y externa", "weekStart": 9, "weekEnd": 14, "done": false, "output": "Plan de validación multicohorte"}, {"id": "t13", "phase": "f3", "name": "Baselines interpretables: regresión, Cox/supervivencia y scores simples", "weekStart": 10, "weekEnd": 16, "done": false, "output": "Baselines + métricas iniciales"}, {"id": "t14", "phase": "f3", "name": "Modelos ML tabulares: random forest, gradient boosting, XGBoost/LightGBM y calibración", "weekStart": 12, "weekEnd": 20, "done": false, "output": "Modelo candidato v1"}, {"id": "t15", "phase": "f3", "name": "Desbalanceo: PR-AUC, PPV, sensibilidad top-k, enrichment y riesgo absoluto", "weekStart": 13, "weekEnd": 20, "done": false, "output": "Informe de rendimiento realista"}, {"id": "t16", "phase": "f3", "name": "Interpretabilidad: SHAP, estabilidad de variables y análisis por cohortes/subgrupos", "weekStart": 15, "weekEnd": 22, "done": false, "output": "Informe de interpretabilidad"}, {"id": "t17", "phase": "f4", "name": "Validación interna-externa entre bases y análisis de transportabilidad", "weekStart": 17, "weekEnd": 25, "done": false, "output": "Validación multicohorte"}, {"id": "t18", "phase": "f4", "name": "Calibración, decision curve analysis y umbrales clínicamente útiles", "weekStart": 19, "weekEnd": 26, "done": false, "output": "Análisis de utilidad clínica"}, {"id": "t19", "phase": "f4", "name": "Subgrupos: edad, sexo, diabetes, tabaquismo, historia familiar, etc.", "weekStart": 20, "weekEnd": 27, "done": false, "output": "Robustez por subgrupos"}, {"id": "t20", "phase": "f4", "name": "Comparación contra criterios clínicos existentes y modelos simples", "weekStart": 20, "weekEnd": 28, "done": false, "output": "Benchmarking clínico"}, {"id": "t21", "phase": "f5", "name": "Unir grupo de riesgo IA con población de riesgo familiar/genético conocido", "weekStart": 22, "weekEnd": 28, "done": false, "output": "Cohorte enriquecida"}, {"id": "t22", "phase": "f5", "name": "Analizar valor incremental de genética/biomarcadores en la estratificación", "weekStart": 24, "weekEnd": 31, "done": false, "output": "Modelo ampliado genética/molecular"}, {"id": "t23", "phase": "f5", "name": "Evaluar casos esporádicos no capturados por criterios familiares", "weekStart": 25, "weekEnd": 32, "done": false, "output": "Análisis de casos esporádicos"}, {"id": "t24", "phase": "f6", "name": "Definir subcohorte de imagen y criterios para CT/MRI/radiómica", "weekStart": 23, "weekEnd": 28, "done": false, "output": "Cohorte de imagen v0"}, {"id": "t25", "phase": "f6", "name": "Preprocesamiento/segmentación y extracción de variables radiómicas", "weekStart": 26, "weekEnd": 33, "done": false, "output": "Radiomics feature set"}, {"id": "t26", "phase": "f6", "name": "Modelo de segunda fase: riesgo IA + genética/molecular + radiómica", "weekStart": 29, "weekEnd": 35, "done": false, "output": "Modelo multimodal v1"}, {"id": "t27", "phase": "f7", "name": "Artículo 1: revisión/protocolo o diseño metodológico", "weekStart": 6, "weekEnd": 14, "done": false, "output": "Manuscrito 1 enviado"}, {"id": "t28", "phase": "f7", "name": "Artículo 2: modelo clínico-epidemiológico y validación multicohorte", "weekStart": 16, "weekEnd": 26, "done": false, "output": "Manuscrito 2 enviado"}, {"id": "t29", "phase": "f7", "name": "Artículo 3: integración genética/radiómica o modelo multimodal", "weekStart": 26, "weekEnd": 36, "done": false, "output": "Manuscrito 3 enviado"}, {"id": "t30", "phase": "f7", "name": "Seguimiento anual 1: datos, protocolo y primeros análisis", "weekStart": 10, "weekEnd": 12, "done": false, "output": "Informe anual 1"}, {"id": "t31", "phase": "f7", "name": "Seguimiento anual 2: modelo principal y validación preliminar", "weekStart": 22, "weekEnd": 24, "done": false, "output": "Informe anual 2"}, {"id": "t32", "phase": "f7", "name": "Seguimiento anual 3: integración final, publicaciones y capítulos", "weekStart": 32, "weekEnd": 34, "done": false, "output": "Informe anual 3"}, {"id": "t33", "phase": "f7", "name": "Redacción de tesis: capítulos, figuras, anexos reproducibles", "weekStart": 28, "weekEnd": 36, "done": false, "output": "Borrador completo"}, {"id": "t34", "phase": "f7", "name": "Depósito, revisión, defensa y documentación permitida", "weekStart": 35, "weekEnd": 36, "done": false, "output": "Tesis depositada/defendida"}, {"id": "t35", "phase": "f7", "name": "Artículo opcional: recurso/pipeline reproducible (solo si no distrae del depósito)", "weekStart": 30, "weekEnd": 36, "done": false, "output": "Artículo técnico"}], "milestones": [{"id": "m1", "name": "Plan de investigación v1", "date": "2026-12-31", "icon": "📝", "res": "Pregunta científica, endpoints, población diana y criterios definidos"}, {"id": "m2", "name": "Inventario de datos", "date": "2027-03-31", "icon": "🗂️", "res": "Mapa de las 3 bases, diccionario de variables y viabilidad real"}, {"id": "m3", "name": "Dataset clínico-epidemiológico v1", "date": "2027-09-30", "icon": "🧹", "res": "Cohorte analítica limpia, etiquetas temporales y plan anti-leakage"}, {"id": "m4", "name": "Modelo candidato inicial", "date": "2028-03-31", "icon": "🤖", "res": "Baselines + modelos ML con calibración e interpretabilidad preliminar"}, {"id": "m5", "name": "Validación multicohorte", "date": "2028-09-30", "icon": "✅", "res": "Evaluación externa/interna-externa y análisis de utilidad clínica"}, {"id": "m6", "name": "Integración genética/molecular", "date": "2029-03-31", "icon": "🧬", "res": "Valor incremental y definición de grupo enriquecido"}, {"id": "m7", "name": "Subcohorte radiómica", "date": "2029-06-30", "icon": "🩻", "res": "Features radiómicas e integración multimodal de segunda fase"}, {"id": "m8", "name": "Tesis y defensa", "date": "2029-09-30", "icon": "🎓", "res": "Manuscritos, tesis depositada y defensa"}], "notes": [{"id": "n1", "kind": "riesgo", "title": "Data leakage", "text": "Excluir señales demasiado cercanas o posteriores a sospecha/diagnóstico.", "date": "2026-10-01"}, {"id": "n2", "kind": "riesgo", "title": "Baja prevalencia", "text": "Priorizar PPV, sensibilidad top-k, enrichment, calibración y utilidad clínica, no solo AUC.", "date": "2026-10-01"}, {"id": "n3", "kind": "riesgo", "title": "Heterogeneidad entre bases", "text": "Validación interna-externa y análisis por cohorte/centro/periodo.", "date": "2026-10-01"}, {"id": "n4", "kind": "riesgo", "title": "Modelo difícil de explicar", "text": "Baselines interpretables, SHAP y estabilidad de variables.", "date": "2026-10-01"}, {"id": "n5", "kind": "riesgo", "title": "Proyecto demasiado amplio", "text": "Mantener núcleo clínico-epidemiológico; genética y radiomics como capas progresivas.", "date": "2026-10-01"}, {"id": "n6", "kind": "diseno", "title": "Definición del problema", "text": "¿Qué significa riesgo preclínico de PDAC esporádico?\nDatos: Fechas de diagnóstico, síntomas, derivaciones, pruebas, antecedentes.\nMétodos: Diseño retrospectivo temporal; ventanas de exclusión.\nMétricas: Endpoint claro y ausencia de leakage.\nSalida: Protocolo analítico reproducible.", "date": "2026-10-01"}, {"id": "n7", "kind": "diseno", "title": "Cohorte clínica", "text": "¿Qué variables clínico-epidemiológicas predicen riesgo antes de síntomas?\nDatos: Edad, sexo, diabetes, tabaquismo, IMC, analíticas, medicación, comorbilidad, historia familiar.\nMétodos: Regresión, Cox, GBM, modelos temporales si hay longitudinalidad.\nMétricas: AUC, PR-AUC, PPV, sensibilidad top-k, calibración, enrichment.\nSalida: Modelo central de riesgo.", "date": "2026-10-01"}, {"id": "n8", "kind": "diseno", "title": "Validación", "text": "¿Generaliza entre bases de datos diferentes?\nDatos: Tres bases independientes o particiones por centro/cohorte/periodo.\nMétodos: Validación interna-externa, bootstrap, temporal validation.\nMétricas: Caída de rendimiento, calibración externa, transportabilidad.\nSalida: Evidencia de robustez.", "date": "2026-10-01"}, {"id": "n9", "kind": "diseno", "title": "Utilidad clínica", "text": "¿Qué subgrupo de población merece vigilancia posterior?\nDatos: Riesgo absoluto, costes/umbrales, disponibilidad de genética/imagen.\nMétodos: Decision curve analysis, NNS/NNI, curvas de calibración.\nMétricas: Net benefit, PPV operativo, tamaño grupo alto riesgo.\nSalida: Regla de selección del grupo de riesgo.", "date": "2026-10-01"}, {"id": "n10", "kind": "diseno", "title": "Genética/molecular", "text": "¿Mejora la estratificación añadir información genética?\nDatos: PRS, variantes germinales, antecedentes familiares, biomarcadores si existen.\nMétodos: Modelos incrementales, NRI/IDI, ablation studies.\nMétricas: Mejora calibrada y estable sobre modelo clínico.\nSalida: Modelo ampliado.", "date": "2026-10-01"}, {"id": "n11", "kind": "diseno", "title": "Imagen/radiómica", "text": "¿Puede la imagen caracterizar mejor a los sujetos de alto riesgo?\nDatos: CT/MRI, segmentaciones, variables radiómicas, timing respecto a diagnóstico.\nMétodos: Radiomics, selección de features, modelos de segunda fase.\nMétricas: Rendimiento incremental y robustez.\nSalida: Modelo multimodal de segunda fase.", "date": "2026-10-01"}, {"id": "n12", "kind": "diseno", "title": "Reproducibilidad", "text": "¿Puede repetirse todo el pipeline?\nDatos: Código, versiones, diccionario, logs, semillas, documentación.\nMétodos: MLflow/DVC o equivalente; notebooks auditables.\nMétricas: Trazabilidad y reproducibilidad.\nSalida: Repositorio interno listo para auditoría.", "date": "2026-10-01"}, {"id": "n13", "kind": "nota", "title": "Título provisional y estrategia", "text": "Desarrollo de modelos de aprendizaje automático para la detección preclínica del riesgo de adenocarcinoma ductal pancreático esporádico antes del diagnóstico sintomático.\nEstrategia: estratificación de riesgo clínico-epidemiológico → integración genética/molecular → radiómica en población enriquecida.", "date": "2026-10-01"}, {"id": "n14", "kind": "nota", "title": "Ritmo de seguimiento", "text": "Reunión científica cada 2-4 semanas (avances, bloqueos, decisiones, próximos pasos). Cada 6 meses: revisión de hitos (Gantt, riesgos, outputs, publicaciones). Informe anual en los años 1, 2 y 3.", "date": "2026-10-01"}]};
+const mk=()=>JSON.parse(JSON.stringify(SEED));
+let S=mk(),db,tab='home',form=null,timer;
+const W=()=>S.project.totalWeeks||36;
+const today=()=>{const n=new Date();n.setHours(0,0,0,0);return n};
+const mi=d=>{const s=pd(S.project.startDate);return(d.getFullYear()-s.getFullYear())*12+d.getMonth()-s.getMonth()+1};
+const cw=()=>mi(today());
+const du=s=>Math.round((pd(s)-today())/864e5);
+const PH=id=>S.phases.find(p=>p.id===id)||{name:'Sin fase',color:'#5a5f78'};
+const toast=m=>{const e=$('toast');e.textContent=m;e.classList.add('show');setTimeout(()=>e.classList.remove('show'),2000)};
+const sync=s=>{$('dot').className='dot '+s};
+
+async function init(){
+ if(FIREBASE_CONFIG.apiKey.includes('PEGA_AQUI')){$('load').innerHTML='⚠️ Falta pegar tu firebaseConfig al inicio del archivo HTML.';return}
+ try{
+  sync('syncing');db=getFirestore(initializeApp(FIREBASE_CONFIG));
+  const ref=doc(db,'projects',PROJECT_ID);
+  if(!(await getDoc(ref)).exists())await setDoc(ref,{...S,updatedAt:new Date().toISOString()});
+  onSnapshot(ref,s=>{if(s.exists()){const d=s.data();S={project:d.project||S.project,phases:d.phases||[],tasks:d.tasks||[],milestones:d.milestones||[],notes:d.notes||[]};render();sync('synced')}},()=>sync('error'));
+  $('load').style.display='none';$('app').style.display='flex';render();
+ }catch(e){$('load').innerHTML='⚠️ Error de conexión<br><small>'+esc(e.message)+'</small>'}
+}
+function save(){clearTimeout(timer);timer=setTimeout(async()=>{try{sync('syncing');await setDoc(doc(db,'projects',PROJECT_ID),{...S,updatedAt:new Date().toISOString()});sync('synced')}catch{sync('error');toast('⚠ Error al guardar')}},500)}
+
+const card=t=>{const c=cw(),p=PH(t.phase),cur=t.weekStart<=c&&t.weekEnd>=c,od=t.weekEnd<c&&!t.done;
+ return `<div class="tc${t.done?' done':od?' od':cur?' cur':''}" onclick="tog('${t.id}')"><div class="ck">✓</div><div class="ti"><div class="tn">${esc(t.name)}</div><div class="tm"><span class="bd" style="background:${p.color}22;color:${p.color}">${esc(p.name)}</span><span class="bd">M${t.weekStart}${t.weekEnd>t.weekStart?'–M'+t.weekEnd:''}</span>${od?'<span class="bd" style="color:var(--dg)">⚠ Atrasada</span>':''}</div>${t.output?`<div class="to">→ ${esc(t.output)}</div>`:''}</div><div class="eb" onclick="event.stopPropagation();openF('task','${t.id}')">✎</div></div>`};
+const mcard=m=>{const d=du(m.date);return `<div class="ms${d<0?' past':''}" onclick="openF('ms','${m.id}')"><div style="font-size:22px">${esc(m.icon||'◆')}</div><div><b>${esc(m.name)}</b><small>${fd(m.date)}${m.res?' · '+esc(m.res):''}</small></div><div class="d">${d<0?'Pasado':d===0?'¡Hoy!':d+'d'}</div></div>`};
+
+function render(){
+ const c=cw(),n=W(),T=S.tasks,dn=T.filter(x=>x.done).length,pct=T.length?Math.round(dn/T.length*100):0,dl=du(S.project.endDate);
+ $('ttl').textContent=S.project.title||'Doctorado Gantt';
+ $('today').textContent=new Date().toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'});
+ const wk=c<1?'Antes del inicio':c>n?'Plazo finalizado':`Mes ${c} de ${n}`;
+ const c2=Math.max(1,c),wt=T.filter(t=>t.weekStart<=c2&&t.weekEnd>=c2);
+ const ups=S.milestones.filter(m=>du(m.date)>=0).sort((a,b)=>du(a.date)-du(b.date));
+ $('v-home').innerHTML=`<div class="ban"><div><strong>${wk}</strong><span>Entrega: ${fd(S.project.endDate)}</span></div><div class="big">${dl>0?dl+'d':dl===0?'¡Hoy!':'🎓'}</div></div>
+ <div class="cards"><div class="cd"><small>Progreso</small><b>${pct}%</b><span style="font-size:10px;color:var(--m)">${dn} / ${T.length} tareas</span><div class="bar0"><i style="width:${pct}%"></i></div></div>
+ <div class="cd"><small>Próximo hito</small><b>${ups[0]?(du(ups[0].date)||'¡Hoy!'):'—'}</b><span style="font-size:10px;color:var(--m)">${ups[0]?esc(ups[0].name):'sin hitos'}</span></div></div>
+ <h2>Este mes</h2>${wt.map(card).join('')||'<div class="em">No hay tareas este mes</div>'}
+ <h2>Próximos hitos</h2>${ups.slice(0,3).map(mcard).join('')||'<div class="em">Sin hitos próximos</div>'}`;
+ // gantt
+ const g=`grid-template-columns:90px repeat(${n},1fr)`;
+ let h=`<div style="min-width:${90+n*30}px"><div class="gr" style="${g}"><div class="gl">Mes</div>${Array.from({length:n},(_,i)=>`<div class="gw${i+1===c?' now':''}">M${i+1}</div>`).join('')}</div>`;
+ T.forEach(t=>{const p=PH(t.phase);h+=`<div class="gr" style="${g}"><div class="gl" style="color:${p.color}">${t.done?'✓ ':''}${esc(t.name.slice(0,22))}</div><div class="bar" style="grid-column:${t.weekStart+1}/${t.weekEnd+2};background:${p.color}${t.done?'44':'bb'}"></div></div>`});
+ if(S.milestones.length){h+=`<div class="gr" style="${g}"><div class="gl" style="color:var(--dg)">Hitos</div>`;
+  S.milestones.forEach(m=>{const w=mi(pd(m.date));if(w>=1&&w<=n)h+=`<div class="dm" style="grid-column:${w+1}">${esc(m.icon||'◆')}</div>`});h+='</div>'}
+ $('v-gantt').innerHTML=T.length||S.milestones.length?`<h2>Vista Gantt</h2><div class="gs">${h}</div></div>`:'<div class="em">Aún no hay tareas.<br>Añádelas en la pestaña Tareas.</div>';
+ // tasks
+ const groups=[...S.phases,{id:'',name:'Sin fase',color:'#5a5f78'}];let th='';
+ groups.forEach(p=>{const l=T.filter(t=>(t.phase||'')===p.id||(!p.id&&!S.phases.some(x=>x.id===t.phase)));if(!l.length)return;
+  th+=`<div class="ph"><i style="background:${p.color}"></i>${esc(p.name)}<span>${l.filter(t=>t.done).length}/${l.length}</span></div>${p.obj?`<div class="to" style="margin:-4px 0 8px">🎯 ${esc(p.obj)}${p.dec?`<br>⚖️ ${esc(p.dec)}`:''}</div>`:''}${l.map(card).join('')}`});
+ $('v-tasks').innerHTML=th||`<div class="em">Sin tareas todavía.<br>${S.phases.length?'Pulsa + para añadir la primera.':'Crea primero una fase en ⋯ → Nueva fase, y luego pulsa +.'}</div>`;
+ $('v-hitos').innerHTML=[...S.milestones].sort((a,b)=>du(a.date)-du(b.date)).map(mcard).join('')||'<div class="em">Sin hitos.<br>Pulsa + para añadir el primero.</div>';
+ const IC={nota:'📝',diseno:'🔬',riesgo:'⚠️'};
+ $('v-notas').innerHTML=[['nota','Reuniones y notas'],['diseno','Diseño científico'],['riesgo','Riesgos y controles']].map(([k,l])=>`<h2>${l}</h2>`+(S.notes.filter(n=>n.kind===k).sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(n=>`<div class="ms" onclick="openF('note','${n.id}')"><div style="font-size:20px">${IC[k]}</div><div style="flex:1;min-width:0"><b>${esc(n.title)}</b><small style="white-space:pre-line">${k==='nota'&&n.date?fd(n.date)+' · ':''}${esc(n.text)}</small></div></div>`).join('')||'<div class="em">Vacío</div>')).join('');
+ $('tabs').innerHTML=[['home','Inicio'],['gantt','Gantt'],['tasks','Tareas'],['hitos','Hitos'],['notas','Notas']].map(([k,l])=>`<div class="tab${tab===k?' on':''}" onclick="go('${k}')">${l}</div>`).join('');
+ $('nav').innerHTML=[['home','⌂','Inicio'],['gantt','▦','Gantt'],['tasks','☑','Tareas'],['hitos','◆','Hitos'],['notas','✎','Notas']].map(([k,i,l])=>`<div class="ni${tab===k?' on':''}" onclick="go('${k}')"><div>${i}</div>${l}</div>`).join('');
+ ['home','gantt','tasks','hitos','notas'].forEach(k=>$('v-'+k).classList.toggle('hid',k!==tab));
+ $('fab').style.display=tab==='tasks'||tab==='hitos'||tab==='notas'?'block':'none';
+}
+
+const inp=(l,i,v,t='text')=>`<label>${l}</label><input id="${i}" type="${t}" value="${esc(v)}">`;
+window.openF=(type,id)=>{form={type,id};
+ const T=S.tasks.find(x=>x.id===id)||{},P=S.phases.find(x=>x.id===id)||{},M=S.milestones.find(x=>x.id===id)||{},pr=S.project,N=S.notes.find(x=>x.id===id)||{};
+ const wk=Math.min(Math.max(cw(),1),W());let b='',t='';
+ if(type==='menu'){t='Opciones';b=`<div class="mi" onclick="openF('proj')">⚙️ Configurar proyecto</div><div class="mi" onclick="openF('phase')">➕ Nueva fase</div>${S.phases.map(p=>`<div class="mi" onclick="openF('phase','${p.id}')"><i style="background:${p.color}"></i>${esc(p.name)} <span style="margin-left:auto;color:var(--m)">✎</span></div>`).join('')}<div class="mi" style="color:var(--dg)" onclick="wipe()">🔄 Restaurar plan inicial</div><div class="ft"><button class="btn" onclick="closeF()">Cerrar</button></div>`;}
+ else{
+  if(type==='task'){t=id?'Editar tarea':'Nueva tarea';b=inp('Nombre','f1',T.name)+`<label>Fase</label><select id="f2"><option value="">Sin fase</option>${S.phases.map(p=>`<option value="${p.id}"${p.id===T.phase?' selected':''}>${esc(p.name)}</option>`).join('')}</select><div class="two">${inp('Mes inicio','f3',T.weekStart||wk,'number')}${inp('Mes fin','f4',T.weekEnd||wk,'number')}</div>`+inp('Output esperado (opcional)','f5',T.output)}
+  if(type==='phase'){t=id?'Editar fase':'Nueva fase';b=inp('Nombre','f1',P.name)+inp('Color','f2',P.color||'#865550','color')+inp('Objetivo','f3',P.obj)+inp('Decisión crítica','f4',P.dec)}
+  if(type==='ms'){t=id?'Editar hito':'Nuevo hito';b=inp('Nombre','f1',M.name)+inp('Fecha','f2',M.date||iso(new Date()),'date')+inp('Icono (emoji)','f3',M.icon||'🎯')+inp('Resultado esperado','f4',M.res)}
+  if(type==='note'){t=id?'Editar':'Nueva nota';b=`<label>Tipo</label><select id="f5">${[['nota','📝 Reunión / nota'],['diseno','🔬 Diseño científico'],['riesgo','⚠️ Riesgo']].map(([k,l])=>`<option value="${k}"${(N.kind||'nota')===k?' selected':''}>${l}</option>`).join('')}</select>`+inp('Título','f1',N.title)+`<label>Detalle</label><textarea id="f2" rows="5">${esc(N.text)}</textarea>`+inp('Fecha','f3',N.date||iso(new Date()),'date')}
+  if(type==='proj'){t='Configurar proyecto';b=inp('Nombre','f1',pr.title)+inp('Fecha de inicio (Mes 1)','f2',pr.startDate,'date')+inp('Fecha de entrega','f3',pr.endDate,'date')+inp('Número de meses','f4',W(),'number')}
+  b+=`<div class="ft">${id&&type!=='proj'?'<button class="btn d" onclick="delF()">Eliminar</button>':''}<button class="btn" onclick="closeF()">Cancelar</button><button class="btn p" onclick="saveF()">Guardar</button></div>`}
+ $('md').innerHTML=`<h3>${t}</h3>${b}`;$('ov').classList.add('open')};
+window.closeF=()=>$('ov').classList.remove('open');
+const up=(arr,id,data,pre,def={})=>{if(id)Object.assign(arr.find(x=>x.id===id),data);else arr.push({id:pre+Date.now(),...def,...data})};
+window.saveF=()=>{const{type,id}=form,v=k=>$(k).value.trim();
+ if(type!=='proj'&&!v('f1'))return toast('⚠ Escribe un nombre');
+ if(type==='task'){const ws=Math.max(1,+v('f3')||1),we=Math.max(ws,+v('f4')||ws);up(S.tasks,id,{name:v('f1'),phase:v('f2'),weekStart:ws,weekEnd:we,output:v('f5')},'t',{done:false})}
+ if(type==='phase')up(S.phases,id,{name:v('f1'),color:v('f2'),obj:v('f3'),dec:v('f4')},'p');
+ if(type==='ms')up(S.milestones,id,{name:v('f1'),date:v('f2'),icon:v('f3')||'◆',res:v('f4')},'m');
+ if(type==='note')up(S.notes,id,{kind:v('f5'),title:v('f1'),text:$('f2').value.trim(),date:v('f3')},'n');
+ if(type==='proj'){if(!v('f2')||!v('f3'))return toast('⚠ Introduce las fechas');S.project={title:v('f1')||'Doctorado PDAC',startDate:v('f2'),endDate:v('f3'),totalWeeks:Math.max(1,Math.min(60,+v('f4')||36))}}
+ save();closeF();render();toast('Guardado ✓')};
+window.delF=()=>{const{type,id}=form;
+ if(type==='task')S.tasks=S.tasks.filter(x=>x.id!==id);
+ if(type==='phase')S.phases=S.phases.filter(x=>x.id!==id);
+ if(type==='ms')S.milestones=S.milestones.filter(x=>x.id!==id);
+ if(type==='note')S.notes=S.notes.filter(x=>x.id!==id);
+ save();closeF();render();toast('Eliminado')};
+window.wipe=()=>{if(!confirm('¿Volver al plan inicial? Se perderán los cambios.'))return;S=mk();save();closeF();render()};
+window.tog=id=>{const t=S.tasks.find(x=>x.id===id);t.done=!t.done;save();render();toast(t.done?'✓ Completada':'Pendiente')};
+window.go=k=>{tab=k;render()};
+window.addNew=()=>openF(tab==='tasks'?'task':tab==='notas'?'note':'ms');
+init();setInterval(()=>{if(db)render()},60000);
+</script></body></html>
